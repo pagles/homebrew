@@ -45,9 +45,7 @@ class GccArmEcos <Formula
                   "--with-cloog=#{Formula.factory('cloog-ppl').prefix}",
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
                   "--with-gxx-include-dir=$PREFIX/$TARGET/include",
-                  "--disable-debug",
-                  "--with-pkgversion=Neotion-SDK-Lindsey", 
-                  "--with-bugurl=http://www.neotion.com"
+                  "--disable-debug"
       system "make"
       system "make install"
     end
