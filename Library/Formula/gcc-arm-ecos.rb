@@ -1,6 +1,9 @@
 require 'formula'
 
 class GccArmEcos <Formula
+  # this is gcc-core-4.4.3 + gcc-g++-4.4.3 + newlib repackaged as
+  # homebrew makes things really hard when it comes to building from a
+  # combination of various archives
   @url='http://qnap.moaningmarmot.info/public/gcc-ecos-4.4.3.tar.bz2'
   @homepage='http://gcc.gnu.org/'
   @sha1='05565e09eac268cee5bd2bb55addc12882c59ca0'
@@ -19,12 +22,10 @@ class GccArmEcos <Formula
   def install
     # Cannot build with LLVM (cross compiler crashes)
     ENV.gcc_4_2
-    # Fix up CFLAGS for cross compilation
-    #ENV['CFLAGS_FOR_BUILD'] = ENV['CFLAGS'] + " -O2"
+    # Fix up CFLAGS for cross compilation (default switches cause build issues)
     ENV['CFLAGS_FOR_BUILD'] = "-O2"
     ENV['CFLAGS'] = "-O2"
     ENV['CFLAGS_FOR_TARGET'] = "-O2"
-    #ENV['CXXFLAGS_FOR_BUILD'] = ENV['CXXFLAGS'] + " -O2"
     ENV['CXXFLAGS_FOR_BUILD'] = "-O2"
     ENV['CXXFLAGS'] = "-O2"
     ENV['CXXFLAGS_FOR_TARGET'] = "-O2"
@@ -45,7 +46,9 @@ class GccArmEcos <Formula
                   "--with-cloog=#{Formula.factory('cloog-ppl').prefix}",
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
                   "--with-gxx-include-dir=#{prefix}/arm-eabi/include",
-                  "--disable-debug"
+                  "--disable-debug",
+                  "--with-pkgversion=Neotion-SDK-Lindsey", 
+                  "--with-bugurl=http://www.neotion.com"
       system "make"
       system "make install"
     end
