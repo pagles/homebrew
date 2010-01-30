@@ -17,6 +17,8 @@ class GccArmEcos <Formula
   end
 
   def install
+    # Cannot build with LLVM (cross compiler crashes)
+    ENV.gcc_4_2
     # Fix up CFLAGS for cross compilation
     #ENV['CFLAGS_FOR_BUILD'] = ENV['CFLAGS'] + " -O2"
     ENV['CFLAGS_FOR_BUILD'] = "-O2"
@@ -26,8 +28,6 @@ class GccArmEcos <Formula
     ENV['CXXFLAGS_FOR_BUILD'] = "-O2"
     ENV['CXXFLAGS'] = "-O2"
     ENV['CXXFLAGS_FOR_TARGET'] = "-O2"
-    # Cannot build with LLVM
-    ENV.gcc_4_2
     
     build_dir='build'
     FileUtils.mkdir build_dir
@@ -44,7 +44,7 @@ class GccArmEcos <Formula
                   "--with-ppl=#{Formula.factory('ppl').prefix}",
                   "--with-cloog=#{Formula.factory('cloog-ppl').prefix}",
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
-                  "--with-gxx-include-dir=$PREFIX/$TARGET/include",
+                  "--with-gxx-include-dir=#{prefix}/arm-eabi/include",
                   "--disable-debug"
       system "make"
       system "make install"
