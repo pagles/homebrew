@@ -123,7 +123,8 @@ def puts_columns items, cols = 4
     items.concat("\n") unless items.empty?
 
     # determine the best width to display for different console sizes
-    console_width = `/bin/stty size`.chomp.split(" ").last
+    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
+    console_width = 80 if console_width <= 0
     longest = items.sort_by { |item| item.length }.last
     optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
     cols = optimal_col_width > 1 ? optimal_col_width : 1
@@ -147,6 +148,12 @@ def exec_editor *args
   # but we still want to use the comma-delimited version of exec because then
   # we don't have to escape args, and escaping 100% is tricky
   exec *(editor.split+args)
+end
+
+# GZips the given path, and returns the gzipped file
+def gzip path
+  system "/usr/bin/gzip", path
+  return Pathname.new(path+".gz")
 end
 
 # returns array of architectures suitable for -arch gcc flag
@@ -175,7 +182,7 @@ module HomebrewInreplaceExtension
   # value with "new_value", or removes the definition entirely.
   # See inreplace in utils.rb
   def change_make_var! flag, new_value
-    new_value = "#{flag} = #{new_value}" unless new_value.to_s.empty?
+    new_value = "#{flag}=#{new_value}" unless new_value.to_s.empty?
     gsub! Regexp.new("^#{flag}\\s*=.*$"), new_value.to_s
   end
   def remove_make_var! flags
