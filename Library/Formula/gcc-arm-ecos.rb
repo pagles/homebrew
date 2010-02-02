@@ -4,7 +4,7 @@ class GccArmEcos <Formula
   # this is gcc-core-4.4.3 + gcc-g++-4.4.3 + newlib repackaged as
   # homebrew makes things really hard when it comes to building from a
   # combination of various archives
-  @url='http://qnap.moaningmarmot.info/public/gcc-ecos-4.4.3.tar.bz2'
+  @url='http://www.moaningmarmot.info/public/gcc-ecos-4.4.3.tar.bz2'
   @homepage='http://gcc.gnu.org/'
   @sha1='05565e09eac268cee5bd2bb55addc12882c59ca0'
 
