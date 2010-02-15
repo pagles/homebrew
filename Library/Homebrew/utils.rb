@@ -123,7 +123,8 @@ def puts_columns items, cols = 4
     items.concat("\n") unless items.empty?
 
     # determine the best width to display for different console sizes
-    console_width = `/bin/stty size`.chomp.split(" ").last
+    console_width = `/bin/stty size`.chomp.split(" ").last.to_i
+    console_width = 80 if console_width <= 0
     longest = items.sort_by { |item| item.length }.last
     optimal_col_width = (console_width.to_f / (longest.length + 2).to_f).floor
     cols = optimal_col_width > 1 ? optimal_col_width : 1
@@ -149,6 +150,12 @@ def exec_editor *args
   exec *(editor.split+args)
 end
 
+# GZips the given path, and returns the gzipped file
+def gzip path
+  system "/usr/bin/gzip", path
+  return Pathname.new(path+".gz")
+end
+
 # returns array of architectures suitable for -arch gcc flag
 def archs_for_command cmd
     cmd = `/usr/bin/which #{cmd}` unless Pathname.new(cmd).absolute?
@@ -170,16 +177,20 @@ def archs_for_command cmd
     end
 end
 
+# String extensions added by inreplace below.
 module HomebrewInreplaceExtension
   # Looks for Makefile style variable defintions and replaces the
   # value with "new_value", or removes the definition entirely.
-  # See inreplace in utils.rb
   def change_make_var! flag, new_value
-    new_value = "#{flag} = #{new_value}" unless new_value.to_s.empty?
-    gsub! Regexp.new("^#{flag}\\s*=.*$"), new_value.to_s
+    new_value = "#{flag}=#{new_value}"
+    gsub! Regexp.new("^#{flag}\\s*=\\s*(.*)$"), new_value
   end
+  # Removes variable assignments completely.
   def remove_make_var! flags
-    flags.each { |flag| change_make_var! flag, "" }
+    flags.each do |flag|
+      # Also remove trailing \n, if present.
+      gsub! Regexp.new("^#{flag}\\s*=(.*)$\n?"), ""
+    end
   end
 end
 

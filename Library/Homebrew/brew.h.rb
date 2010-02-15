@@ -147,6 +147,16 @@ ENV.libxml2 in your formula's install function.
     EOS
   when /rubygem/
     raise "Sorry RubyGems comes with OS X so we don't package it.\n\n#{force_text}"
+  when /wxwidgets/
+    raise <<-EOS
+#{name} is blacklisted for creation
+An older version of wxWidgets is provided by Apple with OS X, but
+a formula for wxWidgets 2.8.10 is provided:
+
+    brew install wxmac
+
+  #{force_text}
+    EOS
   end unless ARGV.force?
 
   __make url, name
@@ -233,6 +243,27 @@ def issues_for_formula name
   issues
 rescue
   []
+end
+
+def cleanup name
+  require 'formula'
+
+  f = Formula.factory name
+
+  # we can't tell which one to keep in this circumstance
+  raise "The most recent version of #{name} is not installed" unless f.installed?
+
+  if f.prefix.parent.directory?
+    kids = f.prefix.parent.children
+    kids.each do |keg|
+      next if f.prefix == keg
+      print "Uninstalling #{keg}..."
+      FileUtils.rm_rf keg
+      puts
+    end
+  end
+
+  prune # seems like a good time to do some additional cleanup
 end
 
 def clean f
@@ -462,7 +493,10 @@ private
     perms=0444
     case `file -h '#{path}'`
     when /Mach-O dynamically linked shared library/
-      strip path, '-SxX'
+      # Stripping libraries is causing no end of trouble
+      # Lets just give up, and try to do it manually in instances where it
+      # makes sense
+      #strip path, '-SxX'
     when /Mach-O [^ ]* ?executable/
       strip path
       perms=0555
