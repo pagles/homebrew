@@ -19,6 +19,7 @@ class Qt <Formula
 
   depends_on "d-bus" if ARGV.include? '--with-qtdbus'
   depends_on 'libpng' unless x11?
+  depends_on 'sqlite' if MACOS_VERSION <= 10.5
 
   def install
     if version == '4.6.2' # being specific so needs reconfirmed each version
@@ -28,11 +29,14 @@ class Qt <Formula
     end
 
     conf_args = ["-prefix", prefix,
-                 "-system-sqlite", "-system-libpng", "-system-zlib",
+                 "-system-libpng", "-system-zlib",
                  "-nomake", "demos", "-nomake", "examples",
                  "-release", "-cocoa",
                  "-confirm-license", "-opensource",
                  "-fast"]
+
+    # See: http://github.com/mxcl/homebrew/issues/issue/744
+    conf_args << "-system-sqlite" if MACOS_VERSION <= 10.5
 
     conf_args << "-plugin-sql-mysql" if (HOMEBREW_CELLAR+"mysql").directory?
 
@@ -81,6 +85,13 @@ class Qt <Formula
     (lib+'pkgconfig/QtUiTools_debug.pc').unlink
     # remove porting file for non-humans
     (prefix+'q3porting.xml').unlink
+    
+    # Some config scripts will only find QT in a "Frameworks" folder
+    # VirtualBox is an example of where this is needed
+    # See: http://github.com/mxcl/homebrew/issues/issue/745
+    cd prefix do
+      ln_s lib, "Frameworks"
+    end
   end
 
   def caveats

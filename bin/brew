@@ -14,7 +14,14 @@ require 'global'
 
 case ARGV.first
 when '--cache'
-  puts HOMEBREW_CACHE
+  if ARGV.named.empty?
+    puts HOMEBREW_CACHE
+  else
+    require 'formula'
+    ARGV.named.each do |name|
+      puts Formula.factory(name).cached_download rescue '(built from source control)'
+    end
+  end
   exit 0
 when '-h', '--help', '--usage', '-?', 'help', nil
   puts ARGV.usage
@@ -77,6 +84,8 @@ begin
     puts HOMEBREW_PREFIX
   when '--repository'
     puts HOMEBREW_REPOSITORY
+  when '--cellar'
+    puts HOMEBREW_CELLAR
   when '--config'
     dump_config
 
@@ -217,6 +226,7 @@ begin
           opoo "Formula not found for #{e.name}"
         end
       end
+      prune # seems like a good time to do some additional cleanup
     else
       ARGV.named.each { |name| cleanup name}
     end
