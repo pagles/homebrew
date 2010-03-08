@@ -7,6 +7,10 @@ class Mpfr <Formula
 
   depends_on 'gmp'
 
+  def patches
+    {:p1 => ['http://www.mpfr.org/mpfr-current/allpatches']}
+  end
+
   def install
     system "./configure", "--prefix=#{prefix}",
                           "--with-gmp=#{Formula.factory('gmp').prefix}",
