@@ -8,8 +8,10 @@ class Gd <Formula
 
   aka :libgd
 
+  depends_on 'jpeg' => :recommended
+
   def install
-    system "./configure", "--prefix=#{prefix}"
+    system "./configure", "--prefix=#{prefix}", "--with-freetype=/usr/X11"
     system "make install"
   end
 end
