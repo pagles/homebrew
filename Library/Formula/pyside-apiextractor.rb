@@ -1,9 +1,9 @@
 require 'formula'
 
 class PysideApiextractor <Formula
-  @url='http://www.pyside.org/files/apiextractor-0.3.3.tar.bz2'
+  @url='http://www.pyside.org/files/apiextractor-0.4.0.tar.bz2'
   @homepage='http://www.pyside.org/'
-  @sha1='677789a1085506908c147896649b06cc62ef1c68'
+  @sha1='cfba532583a3a33c8b27df5236d78b2bee208000'
 
   depends_on 'cmake'
   depends_on 'qt'
