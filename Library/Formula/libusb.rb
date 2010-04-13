@@ -5,7 +5,7 @@ class Libusb <Formula
   @homepage='http://libusb.sourceforge.net'
   @md5='818c7c02112a53e0c182666ee83f2057'
   @version='1.0.6'
-  
+
   def install
     system "./configure", "--prefix=#{prefix}", "--disable-dependency-tracking"
     system "make install"

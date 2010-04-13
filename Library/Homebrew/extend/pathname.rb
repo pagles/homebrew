@@ -17,8 +17,10 @@ class Pathname
     if new_basename
       new_basename = File.basename(new_basename) # rationale: see Pathname.+
       dst = self+new_basename
+      return_value =Pathname.new(dst)
     else
       dst = self
+      return_value = self+File.basename(src)
     end
 
     src = src.to_s
@@ -41,7 +43,7 @@ class Pathname
       FileUtils.mv src, dst
     end
 
-    return Pathname.new(dst)
+    return return_value
   end
 
   # we assume this pathname object is a file obviously
@@ -108,7 +110,7 @@ class Pathname
 
     # github tarballs are special
     # we only support numbered tagged downloads
-    %r[github.com/.*/tarball/v?((\d\.)+\d)$].match to_s
+    %r[github.com/.*/tarball/v?((\d\.)+\d+)$].match to_s
     return $1 if $1
 
     # eg. boost_1_39_0
@@ -152,10 +154,30 @@ class Pathname
 
     nil
   end
+  
+  def incremental_hash(hasher)
+    incr_hash = hasher.new
+    self.open('r') do |f|
+      while(buf = f.read(1024))
+        incr_hash << buf
+      end
+    end
+    incr_hash.hexdigest
+  end
 
   def md5
-    require 'digest'
-    Digest::MD5.hexdigest(File.read(self))
+    require 'digest/md5'
+    incremental_hash(Digest::MD5)
+  end
+  
+  def sha1
+    require 'digest/sha1'
+    incremental_hash(Digest::SHA1)
+  end
+  
+  def sha2
+    require 'digest/sha2'
+    incremental_hash(Digest::SHA2)
   end
 
   if '1.9' <= RUBY_VERSION
