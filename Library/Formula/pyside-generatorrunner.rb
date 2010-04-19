@@ -1,9 +1,9 @@
 require 'formula'
 
 class PysideGeneratorrunner <Formula
-  @url='http://www.pyside.org/files/generatorrunner-0.3.3.tar.bz2'
+  @url='http://www.pyside.org/files/generatorrunner-0.4.0.tar.bz2'
   @homepage='http://www.pyside.org/'
-  @sha1='785db83557546932e0ec55993cc937e4658da964'
+  @sha1='699eecc916a63afae5ba5c3054270019c90a5195'
 
   depends_on 'cmake'
   depends_on 'qt'
