@@ -32,6 +32,10 @@ class Subversion <Formula
     end
   end
 
+  def patches
+    DATA
+  end
+
   def install
     setup_leopard if MACOS_VERSION < 10.6
 
@@ -51,3 +55,25 @@ class Subversion <Formula
     system "make install"
   end
 end
+
+__END__
+--- a/configure	2010-01-20 21:41:31.000000000 +0100
++++ b/configure	2010-03-11 23:33:56.000000000 +0100
+@@ -22197,7 +22197,7 @@
+   return 0;
+ }
+ _ACEOF
+-for ac_lib in '' intl; do
++for ac_lib in ''; do
+   if test -z "$ac_lib"; then
+     ac_res="none required"
+   else
+@@ -22262,7 +22262,7 @@
+   return 0;
+ }
+ _ACEOF
+-for ac_lib in '' intl; do
++for ac_lib in ''; do
+   if test -z "$ac_lib"; then
+     ac_res="none required"
+   else
