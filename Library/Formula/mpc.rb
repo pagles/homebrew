@@ -1,14 +1,19 @@
 require 'formula'
 
 class Mpc <Formula
-  url 'http://downloads.sourceforge.net/project/musicpd/mpc/0.19/mpc-0.19.tar.bz2'
-  homepage 'http://mpd.wikia.com/wiki/Client:Mpc'
-  md5 '9ab2967d9ec719b06a86f3b4121be654'
+  @url='http://www.multiprecision.org/mpc/download/mpc-0.8.1.tar.gz'
+  @homepage='http://www.multiprecision.org/'
+  @sha1='5ef03ca7aee134fe7dfecb6c9d048799f0810278'
 
-  depends_on 'libmpdclient'
+  depends_on 'gmp'
+  depends_on 'mpfr'
 
   def install
-    system "./configure", "--prefix=#{prefix}", "--disable-debug", "--disable-dependency-tracking"
+    system "./configure", "--prefix=#{prefix}",
+                          "--with-gmp=#{Formula.factory('gmp').prefix}",
+                          "--with-mpfr=#{Formula.factory('mpfr').prefix}",
+                          "--disable-debug"
+                          
     system "make install"
   end
 end
