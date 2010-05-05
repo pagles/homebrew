@@ -1,5 +1,6 @@
 FORMULA_META_FILES = %w[README README.md ChangeLog COPYING LICENSE LICENCE COPYRIGHT AUTHORS]
 PLEASE_REPORT_BUG = "#{Tty.white}Please report this bug at #{Tty.em}http://github.com/mxcl/homebrew/issues#{Tty.reset}"
+HOMEBREW_RECOMMENDED_GCC = 5577
 
 def check_for_blacklisted_formula names
   return if ARGV.force?
@@ -26,6 +27,7 @@ end
 
 def __make url, name
   require 'formula'
+  require 'digest'
 
   path = Formula.path name
   raise "#{path} already exists" if path.exist?
@@ -37,18 +39,39 @@ def __make url, name
     puts "Please check if you are creating a duplicate."
   end
 
+  version = Pathname.new(url).version
+  if version == nil
+    opoo "Version cannot be determined from URL."
+    puts "You'll need to add an explicit 'version' to the formula."
+  else
+    puts "Version detected as #{version}."
+  end
+
+  md5 = ''
+  if ARGV.include? "--cache" and version != nil
+    strategy = detect_download_strategy url
+    if strategy == CurlDownloadStrategy
+      d = strategy.new url, name, version, nil
+      the_tarball = d.fetch
+      md5 = the_tarball.md5
+      puts "MD5 is #{md5}"
+    else
+      puts "--cache requested, but we can only cache formulas that use Curl."
+    end
+  end
+
   template=<<-EOS
             require 'formula'
 
             class #{Formula.class_s name} <Formula
               url '#{url}'
               homepage ''
-              md5 ''
+              md5 '#{md5}'
 
   cmake       depends_on 'cmake'
 
               def install
-  autotools     system "./configure", "--prefix=\#{prefix}", "--disable-debug", "--disable-dependency-tracking"
+  autotools     system "./configure", "--disable-debug", "--disable-dependency-tracking", "--prefix=\#{prefix}"
   cmake         system "cmake . \#{std_cmake_parameters}"
                 system "make install"
               end
@@ -494,7 +517,7 @@ private
   end
 end
 
-def gcc_build
+def gcc_42_build
   `/usr/bin/gcc-4.2 -v 2>&1` =~ /build (\d{4,})/
   if $1
     $1.to_i 
@@ -508,10 +531,22 @@ def gcc_build
     nil
   end
 end
+alias :gcc_build :gcc_42_build # For compatibility
+
+def gcc_40_build
+  `/usr/bin/gcc-4.0 -v 2>&1` =~ /build (\d{4,})/
+  if $1
+    $1.to_i 
+  else
+    nil
+  end
+end
 
 def llvm_build
   if MACOS_VERSION >= 10.6
-    `/Developer/usr/bin/llvm-gcc-4.2 -v 2>&1` =~ /LLVM build (\d{4,})/  
+    xcode_path = `/usr/bin/xcode-select -print-path`.chomp
+    return nil if xcode_path.empty?
+    `#{xcode_path}/usr/bin/llvm-gcc-4.2 -v 2>&1` =~ /LLVM build (\d{4,})/
     $1.to_i
   end
 end

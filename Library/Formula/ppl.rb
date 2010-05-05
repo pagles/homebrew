@@ -11,7 +11,8 @@ class Ppl <Formula
   def install
     system "./configure", "--prefix=#{prefix}",
                           "--with-gmp=#{Formula.factory('gmp').prefix}",
-                          "--with-mpfr=#{Formula.factory('mpfr').prefix}"
+                          "--with-mpfr=#{Formula.factory('mpfr').prefix}",
+                          "--enable-optimization=sspeed"
     system "make"
     system "make install"
   end

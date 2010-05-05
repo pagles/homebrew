@@ -5,12 +5,6 @@ require 'formula'
 class SubversionDeps <Formula
   url 'http://subversion.tigris.org/downloads/subversion-deps-1.6.11.tar.bz2'
   md5 'da1bcdd39c34d91e434407f72b844f2f'
-
-  # Note because this formula is installed into the subversion prefix
-  # it is not in fact keg only
-  def keg_only?
-    :provided_by_osx
-  end
 end
 
 class Subversion <Formula
@@ -27,9 +21,7 @@ class Subversion <Formula
   def setup_leopard
     # Slot dependencies into place
     d=Pathname.getwd
-    SubversionDeps.new.brew do
-      d.install Dir['*']
-    end
+    SubversionDeps.new.brew { d.install Dir['*'] }
   end
 
   def patches

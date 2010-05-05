@@ -10,12 +10,17 @@ class Vtk <Formula
   def install
     FileUtils.mkdir 'vtk-build'
 
+    python_version = `python -V 2>&1`.match('Python (\d+\.\d+)').captures.at(0)
+    ENV.append 'PYTHONPATH', ':',
+               '#{prefix}/lib/python#{python_version}/site-packages'
+
     Dir.chdir 'vtk-build' do
       system "cmake #{std_cmake_parameters} " \
-             "-DBUILD_SHARED_LIBS=ON " \
-             "-DBUILD_TESTING=OFF " \
-             "-DBUILD_EXAMPLES=OFF " \
-             "-DVTK_WRAP_PYTHON=ON "
+                    "-DBUILD_SHARED_LIBS=YES " \
+                    "-DBUILD_TESTING=OFF " \
+                    "-DBUILD_EXAMPLES=OFF " \
+                    "-DVTK_WRAP_PYTHON=ON " \
+                    ".."
       system "make"
       system "make install"
     end
