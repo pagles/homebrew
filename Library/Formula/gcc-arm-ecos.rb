@@ -1,15 +1,16 @@
 require 'formula'
 
 class GccArmEcos <Formula
-  # this is gcc-core-4.4.3 + gcc-g++-4.4.3 + newlib repackaged as
+  # this is gcc-core-4.5.0 + gcc-g++-4.5.0 + newlib-1.18.0b repackaged as
   # homebrew makes things really hard when it comes to building from a
   # combination of various archives
-  @url='http://www.moaningmarmot.info/public/gcc-ecos-4.4.3.tar.bz2'
+  @url='http://dl.dropbox.com/u/2402907/gcc-ecos-4.5.0.tar.bz2'
   @homepage='http://gcc.gnu.org/'
-  @sha1='05565e09eac268cee5bd2bb55addc12882c59ca0'
+  @sha1='d1c91852f00fb93263777ba1f71421f12cab58fb'
 
   depends_on 'gmp'
   depends_on 'mpfr'
+  depends_on 'libmpc'
   depends_on 'ppl'
   depends_on 'cloog-ppl'
   depends_on 'libelf'
@@ -37,17 +38,18 @@ class GccArmEcos <Formula
                   "--disable-shared", "--with-gnu-as", "--with-gnu-ld",
                   "--with-newlib", "--enable-softfloat", "--disable-bigendian",
                   "--disable-fpu", "--disable-underscore", "--enable-multilibs",
-                  "--with-float=soft", "--enable-interwork", "--with-fpu=fpa",
+                  "--with-float=soft", "--enable-interwork", "--enable-lto",
                   "--with-multilib-list=interwork", "--with-abi=aapcs",
                   "--enable-languages=c,c++", "--disable-__cxa_atexit",
                   "--with-gmp=#{Formula.factory('gmp').prefix}",
                   "--with-mpfr=#{Formula.factory('mpfr').prefix}",
+                  "--with-mpc=#{Formula.factory('libmpc').prefix}",
                   "--with-ppl=#{Formula.factory('ppl').prefix}",
                   "--with-cloog=#{Formula.factory('cloog-ppl').prefix}",
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
                   "--with-gxx-include-dir=#{prefix}/arm-eabi/include",
                   "--disable-debug",
-                  "--with-pkgversion=Neotion-SDK-Lindsey", 
+                  "--with-pkgversion=Neotion-SDK-Monica", 
                   "--with-bugurl=http://www.neotion.com"
       system "make"
       system "make install"
