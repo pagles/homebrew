@@ -1,9 +1,9 @@
 require 'formula'
 
 class GdbArmEcos <Formula
-  @url='http://ftp.gnu.org/gnu/gdb/gdb-7.0.1.tar.bz2'
+  @url='http://ftp.gnu.org/gnu/gdb/gdb-7.1.tar.bz2'
   @homepage='http://www.gnu.org/software/gdb/'
-  @sha1='a6b9693b5767dd3b1a3fa925563252afd20eea64'
+  @sha1='417e2e637a296ea0e1cdddf56233311b8708fa19'
 
   depends_on 'gmp'
   depends_on 'mpfr'
