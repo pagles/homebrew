@@ -19,7 +19,6 @@ class Libftdi <Formula
     FileUtils.mkdir 'libftdi-build'
 
     Dir.chdir 'libftdi-build' do
-      ENV.append "CMAKE_INCLUDE_PATH", "/usr/local/homebrew/include"
       system "cmake .. #{std_cmake_parameters}"
       system "make"
       system "make install"
