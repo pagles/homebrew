@@ -1,13 +1,15 @@
 require 'formula'
 
 class Libftdi <Formula
-  @url="http://www.intra2net.com/en/developer/libftdi/download/libftdi-0.17.tar.gz"
+  # @url="http://www.intra2net.com/en/developer/libftdi/download/libftdi-0.17.tar.gz"
+  @url="git://developer.intra2net.com/libftdi-1.0/"
   @homepage='http://www.intra2net.com/en/developer/libftdi'
-  @version='0.17'
-  @md5='810c69cfaa078b49795c224ef9b6b851'
+  @version='0.18'
+  # @md5='810c69cfaa078b49795c224ef9b6b851'
 
   depends_on 'cmake'
-  depends_on 'libusb-compat'
+  depends_on 'boost'
+  depends_on 'libusb'
 
   def patches
     DATA
@@ -17,6 +19,7 @@ class Libftdi <Formula
     FileUtils.mkdir 'libftdi-build'
 
     Dir.chdir 'libftdi-build' do
+      ENV.append "CMAKE_INCLUDE_PATH", "/usr/local/homebrew/include"
       system "cmake .. #{std_cmake_parameters}"
       system "make"
       system "make install"
@@ -25,26 +28,47 @@ class Libftdi <Formula
 end
 
 __END__
---- a/CMakeLists.txt	2009-12-19 16:07:25.000000000 +0100
-+++ b/CMakeLists.txt	2010-05-03 19:30:34.000000000 +0200
-@@ -38,14 +38,8 @@
+--- a/CMakeLists.txt	2010-06-10 23:33:04.000000000 +0200
++++ b/CMakeLists.txt	2010-06-11 00:01:57.000000000 +0200
+@@ -26,6 +26,11 @@
+ FIND_PACKAGE(USB1 REQUIRED)
+ INCLUDE_DIRECTORIES(${LIBUSB_INCLUDE_DIR})
+ 
++find_package(Boost)
++if(Boost_FOUND)
++  include_directories(${Boost_INCLUDE_DIRS})
++endif(Boost_FOUND)
++
+ # Set components
+ set(CPACK_COMPONENTS_ALL sharedlibs staticlibs headers)
+ set(CPACK_COMPONENT_SHAREDLIBS_DISPLAY_NAME "Shared libraries")
+@@ -43,14 +48,19 @@
  set(CPACK_COMPONENT_STATICLIBS_GROUP "Development")
  set(CPACK_COMPONENT_HEADERS_GROUP    "Development")
  
 -# Create suffix to eventually install in lib64
 -IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
--    SET(LIB_SUFFIX "")
--    SET(PACK_ARCH "")
--  ELSE(CMAKE_SIZEOF_VOID_P EQUAL 4)
++if(NOT APPLE)
++  # Create suffix to eventually install in lib64
++  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
++      SET(LIB_SUFFIX "")
++      SET(PACK_ARCH "")
++    else(CMAKE_SIZEOF_VOID_P EQUAL 8)
++      SET(LIB_SUFFIX 64)
++      SET(PACK_ARCH .x86_64)
++  endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
++else(NOT APPLE)
+     SET(LIB_SUFFIX "")
+     SET(PACK_ARCH "")
+-  ELSE(CMAKE_SIZEOF_VOID_P EQUAL 8)
 -    SET(LIB_SUFFIX 64)
 -    SET(PACK_ARCH .x86_64)
 -endif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-+SET(LIB_SUFFIX "")
-+SET(PACK_ARCH "")
++endif(NOT APPLE)
  
  # Package information
  set(CPACK_PACKAGE_VERSION              ${VERSION_STRING})
-@@ -85,8 +79,6 @@
+@@ -90,8 +100,6 @@
  
  add_subdirectory(src)
  add_subdirectory(ftdipp)
@@ -53,9 +77,9 @@ __END__
  add_subdirectory(packages)
  
  
---- a/src/ftdi.c	2009-12-19 15:52:50.000000000 +0100
-+++ b/src/ftdi.c	2010-05-03 19:30:00.000000000 +0200
-@@ -51,6 +51,9 @@
+--- a/src/ftdi.c	2010-06-10 23:33:04.000000000 +0200
++++ b/src/ftdi.c	2010-06-10 23:13:03.000000000 +0200
+@@ -48,6 +48,9 @@
     } while(0);
  
  
@@ -65,7 +89,7 @@ __END__
  /**
      Internal function to close usb device pointer.
      Sets ftdi->usb_dev to NULL.
-@@ -914,14 +917,28 @@
+@@ -953,14 +956,28 @@
      int divisor, best_divisor, best_baud, best_baud_diff;
      unsigned long encoded_divisor;
      int i;
@@ -96,7 +120,7 @@ __END__
  
      if (ftdi->type == TYPE_AM)
      {
-@@ -939,45 +956,49 @@
+@@ -978,45 +995,49 @@
          int baud_estimate;
          int baud_diff;
  
@@ -107,13 +131,13 @@ __END__
 -            try_divisor = 8;
 -        }
 -        else if (ftdi->type != TYPE_AM && try_divisor < 12)
-+        if ( ! hispeed )
-         {
+-        {
 -            // BM doesn't support divisors 9 through 11 inclusive
 -            try_divisor = 12;
 -        }
 -        else if (divisor < 16)
--        {
++        if ( ! hispeed )
+         {
 -            // AM doesn't support divisors 9 through 15 inclusive
 -            try_divisor = 16;
 -        }
@@ -175,7 +199,7 @@ __END__
          // Get absolute difference from requested baud rate
          if (baud_estimate < baudrate)
          {
-@@ -1020,7 +1041,13 @@
+@@ -1059,7 +1080,13 @@
          *index |= ftdi->index;
      }
      else
