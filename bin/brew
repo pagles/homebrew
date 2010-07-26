@@ -65,7 +65,6 @@ GCC-4.2: #{gcc_42 ? "build #{gcc_42}" : "N/A"} (#{RECOMMENDED_GCC_42} or newer r
 LLVM: #{llvm ? "build #{llvm}" : "N/A" } #{llvm ? "(#{RECOMMENDED_LLVM} or newer recommended)" : "" }
 MacPorts or Fink? #{macports_or_fink_installed?}
 X11 installed? #{x11_installed?}
-PATH: #{ENV['PATH']}
 EOS
 end
 
@@ -95,6 +94,12 @@ begin
     end
   when '--config'
     dump_config
+  when '--env'
+    require 'hardware'
+    require 'extend/ENV'
+    ENV.extend(HomebrewEnvExtension)
+    ENV.setup_build_environment
+    dump_build_env ENV
 
     when 'home', 'homepage'
       if ARGV.named.empty?
@@ -129,17 +134,14 @@ begin
       end
 
     when 'search', '-S'
-      check_for_blacklisted_formula(ARGV.named)
-
-      require "formula"
-      formulae = Formulary.names with_aliases=true
-
-      if ARGV.first =~ /^\/(.*)\/$/
-        puts_columns formulae.grep(Regexp.new($1))
-      else
-        search_term = Regexp.escape(ARGV.first || "")
-        puts_columns formulae.grep(/.*#{search_term}.*/)
+      if ARGV.include? '--macports'
+        exec "open", "http://www.macports.org/ports.php?by=name&substr=#{ARGV.next}"
+      elsif ARGV.include? '--fink'
+        exec "open", "http://pdb.finkproject.org/pdb/browse.php?summary=#{ARGV.next}"
       end
+
+      check_for_blacklisted_formula(ARGV.named)
+      puts_columns search_brews(ARGV.first)
 
     when 'edit'
       if ARGV.named.empty?
@@ -163,23 +165,31 @@ begin
       end
 
   when 'up', 'update'
-    if system "/usr/bin/which -s git"
-      require 'update'
-      updater = RefreshBrew.new
-      old_revision = updater.current_revision
-      unless updater.update_from_masterbrew!
-        puts "Already up-to-date."
-      else
-        puts "Updated Homebrew from #{old_revision[0,8]} to #{updater.current_revision[0,8]}."
-        if updater.pending_formulae_changes?
-          ohai "The following formulae were updated:"
-          puts_columns updater.updated_formulae
-        else
-          puts "No formulae were updated." unless updater.pending_formulae_changes?
-        end
-      end
+    abort "Please `brew install git' first." unless system "/usr/bin/which -s git"
+
+    require 'update'
+    updater = RefreshBrew.new
+    unless updater.update_from_masterbrew!
+      puts "Already up-to-date."
     else
-      abort "Please `brew install git' first."
+      puts "Updated Homebrew from #{updater.initial_revision[0,8]} to #{updater.current_revision[0,8]}."
+      ## New Formulae
+      if updater.pending_new_formulae?
+        ohai "The following formulae are new:"
+        puts_columns updater.added_formulae
+      end
+      ## Deleted Formulae
+      if updater.deleted_formulae?
+        ohai "The following formulae were removed:"
+        puts_columns updater.deleted_formulae
+      end
+      ## Updated Formulae
+      if updater.pending_formulae_changes?
+        ohai "The following formulae were updated:"
+        puts_columns updater.updated_formulae
+      else
+        puts "No formulae were updated."
+      end
     end
 
     when 'ln', 'link'
@@ -224,7 +234,7 @@ begin
         if ARGV.include? "--all"
           require 'formula'
           Formulary.names.each do |name|
-            info name
+            info Formula.factory(name)
             puts '---'
           end
         else
@@ -233,7 +243,7 @@ begin
       elsif ARGV[0][0..6] == 'http://'
         puts Pathname.new(ARGV.shift).version
       else
-        ARGV.named.each {|name| info name}
+        ARGV.formulae.each{ |f| info f }
       end
 
   when 'cleanup'
@@ -253,49 +263,7 @@ begin
 
   when 'install'
     check_for_blacklisted_formula(ARGV.named)
-    
-    require 'formula_installer'
-    require 'hardware'
-
-    ############################################################ sanity checks
-    case Hardware.cpu_type when :ppc, :dunno
-      abort "Sorry, Homebrew does not support your computer's CPU architecture.\n"+
-            "For PPC support, see: http://github.com/sceaga/homebrew/tree/powerpc"
-    end
-
-    raise "Cannot write to #{HOMEBREW_CELLAR}" if HOMEBREW_CELLAR.exist? and not HOMEBREW_CELLAR.writable?
-    raise "Cannot write to #{HOMEBREW_PREFIX}" unless HOMEBREW_PREFIX.writable?
-
-    ################################################################# warnings
-    begin
-      if MACOS_VERSION >= 10.6
-        opoo "You should upgrade to Xcode 3.2.1" if llvm_build < RECOMMENDED_LLVM
-      else
-        opoo "You should upgrade to Xcode 3.1.4" if (gcc_40_build < RECOMMENDED_GCC_40) or (gcc_42_build < RECOMMENDED_GCC_42)
-      end
-    rescue
-      # the reason we don't abort is some formula don't require Xcode
-      # TODO allow formula to declare themselves as "not needing Xcode"
-      opoo "Xcode is not installed! Builds may fail!"
-    end
-
-    if macports_or_fink_installed?
-      opoo "It appears you have Macports or Fink installed"
-      puts "Although, unlikely, this can break builds or cause obscure runtime issues."
-      puts "If you experience problems try uninstalling these tools."
-    end
-
-    ################################################################# install!
-    installer = FormulaInstaller.new
-    installer.install_deps = !ARGV.include?('--ignore-dependencies')
-
-    ARGV.formulae.each do |f|
-      if not f.installed? or ARGV.force?
-        installer.install f
-      else
-        puts "Formula already installed: #{f.prefix}"
-      end
-    end
+    brew_install
 
   when 'log'
     Dir.chdir HOMEBREW_REPOSITORY
@@ -330,8 +298,11 @@ begin
       our_deps = []
       checked = {}
       to_check = [name]
+      stop_early = false
 
-      until to_check.empty?
+      until to_check.empty? or stop_early
+        stop_early = ARGV.include?("-1") or ARGV.include?("--1")
+
         item = to_check.pop
         checked[item] = true
         
@@ -357,18 +328,12 @@ begin
     exec "cat", ARGV.formulae.first.path, *ARGV.options
 
   when 'outdated'
-    require 'formula'
-    HOMEBREW_CELLAR.subdirs.each do |keg|
-      if keg.subdirs.length > 0
-        name = keg.basename('.rb').to_s
-        if (not (f = Formula.factory(name)).installed? rescue nil)
-          if $stdout.tty? and not ARGV.flag? '--quiet'
-            versions = keg.cd{ Dir['*'] }.join(', ')
-            puts "#{name} (#{versions} < #{f.version})"
-          else
-            puts name
-          end
-        end
+    outdated_brews.each do |keg, name, version|
+      if $stdout.tty? and not ARGV.flag? '--quiet'
+        versions = keg.cd{ Dir['*'] }.join(', ')
+        puts "#{name} (#{versions} < #{version})"
+      else
+        puts name
       end
     end
 
@@ -437,7 +402,7 @@ rescue BuildError => e
   if e.was_running_configure?
     puts "It looks like an autotools configure failed."
     puts "Consider re-running the install with '-vd' to keep 'config.log' around:"
-    puts "    brew install -vd formula_name"
+    puts "    brew install -vd #{formula_name}"
     puts "Gist 'config.log' and any error output when reporting an issue."
   end
   puts

@@ -19,14 +19,26 @@ class Jruby < Formula
     # Only keep the OS X native libraries
     Dir.chdir 'lib/native' do
       Dir['*'].each do |file|
-        rm_rf file unless file == 'darwin'
+        rm_rf file unless file.downcase == 'darwin'
       end
     end
 
-    prefix.install Dir['*']
+    (prefix+'jruby').install Dir['*']
+
+    bin.mkpath
+    Dir["#{prefix}/jruby/bin/*"].each do |f|
+      ln_s f, bin+File.basename(f)
+    end
+  end
+
+  def caveats; <<-EOS.undent
+    Consider using RVM or Cider to manage Ruby environments:
+      * RVM: http://rvm.beginrescueend.com/
+      * Cider: http://www.atmos.org/cider/intro.html
+    EOS
   end
 
   def test
-    system "jruby -e ''"
+    system "jruby -e 'puts \"hello\"'"
   end
 end
