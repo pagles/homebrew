@@ -15,10 +15,15 @@ class Ppl <Formula
   depends_on 'mpfr'
 
   def install
-    system "./configure", "--prefix=#{prefix}",
-                          "--with-gmp=#{Formula.factory('gmp').prefix}",
-                          "--with-mpfr=#{Formula.factory('mpfr').prefix}",
-                          "--enable-optimization=sspeed"
+    ENV.append "CFLAGS", "-D__GMP_BITS_PER_MP_LIMB=GMP_NUMB_BITS"
+    ENV.append "CXXFLAGS", "-D__GMP_BITS_PER_MP_LIMB=GMP_NUMB_BITS"
+    args = ["--prefix=#{prefix}",
+            "--with-gmp=#{Formula.factory('gmp').prefix}",
+            "--with-mpfr=#{Formula.factory('mpfr').prefix}",
+            "--enable-optimization=sspeed"]
+    args << "--enable-arch=x86-64" if Hardware.is_64_bit? and MACOS_VERSION >= 10.6
+
+    system './configure', *args 
     system "make"
     system "make install"
   end
