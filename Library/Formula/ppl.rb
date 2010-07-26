@@ -23,7 +23,7 @@ class Ppl <Formula
             "--enable-optimization=sspeed"]
     args << "--enable-arch=x86-64" if Hardware.is_64_bit? and MACOS_VERSION >= 10.6
 
-    system './configure', *args 
+    system './configure', *args
     system "make"
     system "make install"
   end

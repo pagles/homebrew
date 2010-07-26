@@ -8,7 +8,7 @@ class Mpfr <Formula
   depends_on 'gmp'
 
   def patches
-    {:p1 => ['http://mpfr.loria.fr/mpfr-current/allpatches']}
+    {:p1 => ['http://mpfr.loria.fr/mpfr-3.0.0/allpatches']}
   end
 
   def install
