@@ -11,8 +11,7 @@ class Libmpc < Formula
   def install
     system "./configure", "--prefix=#{prefix}",
                           "--with-gmp=#{Formula.factory('gmp').prefix}",
-                          "--with-mpfr=#{Formula.factory('mpfr').prefix}",
-                          "--disable-debug"
+                          "--with-mpfr=#{Formula.factory('mpfr').prefix}"
                           
     system "make install"
   end

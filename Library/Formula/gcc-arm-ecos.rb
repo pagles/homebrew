@@ -4,9 +4,9 @@ class GccArmEcos <Formula
   # this is gcc-core-4.5.0 + gcc-g++-4.5.0 + newlib-1.18.0b repackaged as
   # homebrew makes things really hard when it comes to building from a
   # combination of various archives
-  @url='http://dl.dropbox.com/u/2402907/gcc-ecos-4.5.0.tar.bz2'
+  @url='http://dl.dropbox.com/u/2402907/gcc-ecos-4.5.1.tar.bz2'
   @homepage='http://gcc.gnu.org/'
-  @sha1='d1c91852f00fb93263777ba1f71421f12cab58fb'
+  @sha1='dda4efdd310c232013614f4401d2427e209348ce'
 
   depends_on 'gmp'
   depends_on 'mpfr'
