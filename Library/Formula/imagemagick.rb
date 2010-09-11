@@ -13,6 +13,10 @@ def use_wmf?
   ARGV.include? '--use-wmf'
 end
 
+def disable_openmp?
+  ARGV.include? '--disable-openmp'
+end
+
 def x11?
   # I used this file because old Xcode seems to lack it, and its that old
   # Xcode that loads of people seem to have installed still
@@ -20,8 +24,8 @@ def x11?
 end
 
 class Imagemagick <Formula
-  url 'ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.6.2-4.tar.bz2'
-  md5 'd7a6e0631cfabd9051702ecdf609bfe6'
+  url 'ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.6.4-0.tar.bz2'
+  md5 '7d302986298855b0d5cbdd73d3dacc15'
   homepage 'http://www.imagemagick.org'
 
   depends_on 'jpeg'
@@ -32,6 +36,7 @@ class Imagemagick <Formula
   depends_on 'libtiff' => :optional
   depends_on 'little-cms' => :optional
   depends_on 'jasper' => :optional
+  depends_on 'little-cms' => :optional
 
   depends_on 'libwmf' if use_wmf?
 
@@ -39,11 +44,16 @@ class Imagemagick <Formula
     path.extname == '.la'
   end
 
-  def install
-    # Add to PATH for freetype-config on Snow Leopard
-    ENV.append 'PATH', '/usr/x11/bin', ':'
+  def options
+    [
+      ['--with-ghostscript', 'Compile against ghostscript (not recommended.)'],
+      ['--use-wmf', 'Compile with libwmf support.'],
+      ['--disable-openmp', 'Disable OpenMP.']
+    ]
+  end
 
-    ENV.libpng
+  def install
+    ENV.x11 # Add to PATH for freetype-config on Snow Leopard
     ENV.O3 # takes forever otherwise
 
     args = [ "--disable-osx-universal-binary",
@@ -55,9 +65,9 @@ class Imagemagick <Formula
              "--with-modules",
              "--without-magick-plus-plus" ]
 
-     args << "--disable-openmp" if MACOS_VERSION < 10.6 # libgomp unavailable
-     args << "--without-gslib" unless ghostscript_srsly?
-     args << "--with-gs-font-dir=#{HOMEBREW_PREFIX}/share/ghostscript/fonts" \
+    args << "--disable-openmp" if MACOS_VERSION < 10.6 or disable_openmp?
+    args << "--without-gslib" unless ghostscript_srsly?
+    args << "--with-gs-font-dir=#{HOMEBREW_PREFIX}/share/ghostscript/fonts" \
                 unless ghostscript_srsly? or ghostscript_fonts?
 
     # versioned stuff in main tree is pointless for us
@@ -74,6 +84,11 @@ class Imagemagick <Formula
     s += "You don't have X11 from the Xcode DMG installed. Consequently Imagemagick is less fully featured.\n" unless x11?
     s += "Some tools will complain if the ghostscript fonts are not installed in:\n\t#{HOMEBREW_PREFIX}/share/ghostscript/fonts\n" \
             unless ghostscript_fonts? or ghostscript_srsly?
+    return nil if s.empty?
     return s
+  end
+
+  def test
+    system "identify", "/Library/Application Support/Apple/iChat Icons/Flags/Argentina.gif"
   end
 end

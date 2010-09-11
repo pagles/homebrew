@@ -1,13 +1,15 @@
 require 'formula'
 
 class Libelf <Formula
-  @url='http://www.mr511.de/software/libelf-0.8.13.tar.gz'
-  @homepage='http://www.mr511.de/software/english.html'
-  @sha1='c1d6ac5f182d19dd685c4dfd74eedbfe3992425d'
+  url 'http://www.mr511.de/software/libelf-0.8.13.tar.gz'
+  homepage 'http://www.mr511.de/software/'
+  md5 '4136d7b4c04df68b686570afa26988ac'
 
   def install
-    system "./configure", "--prefix=#{prefix}", "--disable-debug"
-    system "make"
+    system "./configure", 
+           "--disable-debug", 
+           "--disable-dependency-tracking", 
+           "--prefix=#{prefix}"
     system "make install"
   end
 end

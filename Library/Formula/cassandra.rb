@@ -1,10 +1,9 @@
 require 'formula'
 
 class Cassandra <Formula
-  url 'http://apache.mirroring.de/cassandra/0.6.2/apache-cassandra-0.6.2-bin.tar.gz'
+  url 'http://www.alliedquotes.com/mirrors/apache/cassandra/0.6.5/apache-cassandra-0.6.5-bin.tar.gz'
   homepage 'http://cassandra.apache.org'
-  md5 '9243f3bb0638b53865e4eba792719076'
-  version '0.6.2'
+  md5 '2807f5c2e04ead1534a6087087676210'
 
   def install
     (var+"lib/cassandra").mkpath

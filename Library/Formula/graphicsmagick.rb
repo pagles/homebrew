@@ -33,8 +33,12 @@ class Graphicsmagick <Formula
     path.extname == '.la'
   end
 
+  def options
+    [['--with-ghostscript', 'Compile against ghostscript (not recommended.)']]
+  end
+
   def install
-    ENV.gcc_4_2
+    fails_with_llvm
     ENV.libpng
     ENV.O3
 

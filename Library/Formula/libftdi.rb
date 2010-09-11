@@ -1,10 +1,10 @@
 require 'formula'
 
 class Libftdi <Formula
-  # @url="http://www.intra2net.com/en/developer/libftdi/download/libftdi-0.17.tar.gz"
   @url="git://developer.intra2net.com/libftdi-1.0/"
   @homepage='http://www.intra2net.com/en/developer/libftdi'
   @version='0.18'
+  # @url="http://www.intra2net.com/en/developer/libftdi/download/libftdi-0.17.tar.gz"
   # @md5='810c69cfaa078b49795c224ef9b6b851'
 
   depends_on 'cmake'
@@ -16,8 +16,7 @@ class Libftdi <Formula
   end
 
   def install
-    FileUtils.mkdir 'libftdi-build'
-
+    mkdir 'libftdi-build'
     Dir.chdir 'libftdi-build' do
       system "cmake .. #{std_cmake_parameters}"
       system "make"
