@@ -12,7 +12,7 @@ class Libmpc < Formula
     system "./configure", "--prefix=#{prefix}",
                           "--with-gmp=#{Formula.factory('gmp').prefix}",
                           "--with-mpfr=#{Formula.factory('mpfr').prefix}"
-                          
+
     system "make install"
   end
 end

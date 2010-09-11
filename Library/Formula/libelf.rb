@@ -6,9 +6,9 @@ class Libelf <Formula
   md5 '4136d7b4c04df68b686570afa26988ac'
 
   def install
-    system "./configure", 
-           "--disable-debug", 
-           "--disable-dependency-tracking", 
+    system "./configure",
+           "--disable-debug",
+           "--disable-dependency-tracking",
            "--prefix=#{prefix}"
     system "make install"
   end

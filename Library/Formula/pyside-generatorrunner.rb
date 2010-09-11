@@ -10,10 +10,10 @@ class PysideGeneratorrunner <Formula
   depends_on 'pyside-apiextractor'
 
   def install
-    FileUtils.mkdir 'generatorrunner-build'
-    
+    mkdir 'generatorrunner-build'
+
     cmake_version = `cmake --version 2>&1`.match('cmake version (\d+\.\d+)').captures.at(0)
-    
+
     Dir.chdir 'generatorrunner-build' do
       system "cmake #{std_cmake_parameters} " \
              "-DCMAKE_MODULE_PATH=#{Formula.factory('pyside-apiextractor').prefix}/share/cmake-#{cmake_version}/Modules " \

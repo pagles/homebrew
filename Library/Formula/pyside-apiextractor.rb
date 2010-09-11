@@ -10,7 +10,7 @@ class PysideApiextractor <Formula
   depends_on 'boost'
 
   def install
-    FileUtils.mkdir 'apiextractor-build'
+    mkdir 'apiextractor-build'
 
     Dir.chdir 'apiextractor-build' do
       system "cmake #{std_cmake_parameters} .."

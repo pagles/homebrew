@@ -11,12 +11,12 @@ class PysideShiboken <Formula
   depends_on 'pyside-generatorrunner'
 
   def install
-    FileUtils.mkdir 'shiboken-build'
-    
+    mkdir 'shiboken-build'
+
     cmake_version = `cmake --version 2>&1`.match('cmake version (\d+\.\d+)').captures.at(0)
     api_path = "#{Formula.factory('pyside-apiextractor').prefix}/share/cmake-#{cmake_version}/Modules"
     gen_path = "#{Formula.factory('pyside-generatorrunner').prefix}/share/cmake-#{cmake_version}/Modules"
-    
+
     Dir.chdir 'shiboken-build' do
       system "cmake #{std_cmake_parameters} " \
              "-DCMAKE_MODULE_PATH=#{api_path}:#{gen_path} " \

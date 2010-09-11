@@ -8,11 +8,11 @@ class Vtk <Formula
   depends_on 'cmake'
 
   def install
-    FileUtils.mkdir 'vtk-build'
+    mkdir 'vtk-build'
 
     python_version = `python -V 2>&1`.match('Python (\d+\.\d+)').captures.at(0)
     ENV.append 'PYTHONPATH', ':',
-               '#{prefix}/lib/python#{python_version}/site-packages'
+               '#{lib}/python#{python_version}/site-packages'
 
     Dir.chdir 'vtk-build' do
       system "cmake #{std_cmake_parameters} " \

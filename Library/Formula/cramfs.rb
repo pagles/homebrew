@@ -12,7 +12,7 @@ class Cramfs <Formula
   end
 
   def install
-    FileUtils.mkdir 'cramfs-build'
+    mkdir 'cramfs-build'
     Dir.chdir 'cramfs-build' do
       system "cmake .. #{std_cmake_parameters}"
       system "make"
@@ -160,11 +160,11 @@ __END__
 + * Reworked, cleaned up, and updated for cramfs-1.1, December 2002
 + *  - Erik Andersen <andersen@codepoet.org>
   */
- 
+
  /*
   * If you change the disk format of cramfs, please update fs/cramfs/README.
   */
- 
+
 +#define _GNU_SOURCE
 +#include <stdio.h>
  #include <sys/types.h>
@@ -182,7 +182,7 @@ __END__
 +#include <getopt.h>
  #include <linux/cramfs_fs.h>
  #include <zlib.h>
- 
+
 +#if defined(__CYGWIN__)
 +#include "cramfs/src/getline.c"
 +typedef long long int loff_t;
@@ -203,7 +203,7 @@ __END__
 @@ -71,11 +98,17 @@
  		  + (1 << CRAMFS_SIZE_WIDTH) - 1 /* filesize */ \
  		  + (1 << CRAMFS_SIZE_WIDTH) * 4 / PAGE_CACHE_SIZE /* block pointers */ )
- 
+
 +
 +/* The kernel assumes PAGE_CACHE_SIZE as block size. */
 +#define PAGE_CACHE_SIZE (4096)
@@ -213,7 +213,7 @@ __END__
  static unsigned int blksize = PAGE_CACHE_SIZE;
  static long total_blocks = 0, total_nodes = 1; /* pre-count the root node */
  static int image_length = 0;
- 
+
 +
  /*
   * If opt_holes is set, then mkcramfs can create explicit holes in the
@@ -225,10 +225,10 @@ __END__
 +static int opt_squash = 0;
  static char *opt_image = NULL;
  static char *opt_name = NULL;
- 
+
  static int warn_dev, warn_gid, warn_namelen, warn_skip, warn_size, warn_uid;
 +static int swap_endian = 0;
- 
+
 +static const char *const memory_exhausted = "memory exhausted";
 +
  /* In-core version of inode / directory entry. */
@@ -237,7 +237,7 @@ __END__
 @@ -123,49 +160,168 @@
  {
  	FILE *stream = status ? stderr : stdout;
- 
+
 -	fprintf(stream, "usage: %s [-h] [-e edition] [-i file] [-n name] dirname outfile\n"
 +	fprintf(stream, "usage: %s [-h] [-e edition] [-i file] [-n name] [-D file] dirname outfile\n"
  		" -h         print this help\n"
@@ -255,10 +255,10 @@ __END__
 +		" -q         squash permissions (make everything owned by root)\n"
 +		" dirname    root of the filesystem to be compressed\n"
  		" outfile    output file\n", progname, PAD_SIZE);
- 
+
  	exit(status);
  }
- 
+
 -static void die(int status, int syserr, const char *fmt, ...)
 +static void verror_msg(const char *s, va_list p)
  {
@@ -268,7 +268,7 @@ __END__
 +	fprintf(stderr, "mkcramfs: ");
 +	vfprintf(stderr, s, p);
 +}
- 
+
 -	fflush(0);
 -	va_start(arg_ptr, fmt);
 -	fprintf(stderr, "%s: ", progname);
@@ -381,12 +381,12 @@ __END__
 -	exit(status);
 +	return ret;
  }
- 
+
 +extern char *xreadlink(const char *path)
-+{                       
++{
 +	static const int GROWBY = 80; /* how large we will grow strings by */
 +
-+	char *buf = NULL;   
++	char *buf = NULL;
 +	int bufsize = 0, readsize = 0;
 +
 +	do {
@@ -396,13 +396,13 @@ __END__
 +		    perror_msg("%s:%s", progname, path);
 +		    return NULL;
 +		}
-+	}           
++	}
 +	while (bufsize < readsize + 1);
 +
 +	buf[readsize] = '\0';
 +
 +	return buf;
-+}       
++}
 +
  static void map_entry(struct entry *entry)
  {
@@ -433,9 +433,9 @@ __END__
 @@ -204,7 +361,8 @@
  		find_identical_file(orig->next, newfile));
  }
- 
+
 -static void eliminate_doubles(struct entry *root, struct entry *orig) {
-+static void eliminate_doubles(struct entry *root, struct entry *orig) 
++static void eliminate_doubles(struct entry *root, struct entry *orig)
 +{
  	if (orig) {
  		if (orig->size && (orig->path || orig->uncompressed))
@@ -453,7 +453,7 @@ __END__
  	return strcmp ((*(const struct dirent **) a)->d_name,
  		       (*(const struct dirent **) b)->d_name);
 @@ -232,10 +394,7 @@
- 
+
  	/* Set up the path. */
  	/* TODO: Reuse the parent's buffer to save memcpy'ing and duplication. */
 -	path = malloc(len + 1 + MAX_INPUT_NAMELEN + 1);
@@ -466,12 +466,12 @@ __END__
  	*endpath = '/';
 @@ -245,7 +404,7 @@
  	dircount = scandir(name, &dirlist, 0, cramsort);
- 
+
  	if (dircount < 0) {
 -		die(MKFS_ERROR, 1, "scandir failed: %s", name);
 +		error_msg_and_die("scandir failed: %s", name);
  	}
- 
+
  	/* process directory */
 @@ -269,25 +428,20 @@
  		}
@@ -486,7 +486,7 @@ __END__
  				namelen, dirent->d_name);
  		}
  		memcpy(endpath, dirent->d_name, namelen + 1);
- 
+
  		if (lstat(path, &st) < 0) {
 +			perror(endpath);
  			warn_skip = 1;
@@ -587,12 +587,12 @@ __END__
 -			die(MKFS_ERROR, 0, "bogus file type: %s", entry->name);
 +			error_msg_and_die("bogus file type: %s", entry->name);
  		}
- 
+
  		if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
 @@ -372,13 +538,59 @@
  	return totalsize;
  }
- 
+
 +/* routines to swap endianness/bitfields in inode/superblock block data */
 +static void fix_inode(struct cramfs_inode *inode)
 +{
@@ -642,27 +642,27 @@ __END__
  {
  	struct cramfs_super *super = (struct cramfs_super *) base;
  	unsigned int offset = sizeof(struct cramfs_super) + image_length;
- 
+
 -	offset += opt_pad;	/* 0 if no padding */
 +	if (opt_pad) {
 +		offset += opt_pad;	/* 0 if no padding */
 +	}
- 
+
  	super->magic = CRAMFS_MAGIC;
  	super->flags = CRAMFS_FLAG_FSID_VERSION_2 | CRAMFS_FLAG_SORTED_DIRS;
 @@ -406,6 +618,9 @@
  	super->root.size = root->size;
  	super->root.offset = offset >> 2;
- 
+
 +	if (swap_endian)
 +		fix_super(super);
 +
  	return offset;
  }
- 
+
 @@ -414,12 +629,16 @@
  	struct cramfs_inode *inode = (struct cramfs_inode *) (base + entry->dir_offset);
- 
+
  	if ((offset & 3) != 0) {
 -		die(MKFS_ERROR, 0, "illegal offset of %lu bytes", offset);
 +		error_msg_and_die("illegal offset of %lu bytes", offset);
@@ -678,7 +678,7 @@ __END__
 +	else
 +		inode->offset = (offset >> 2);
  }
- 
+
  /*
 @@ -429,7 +648,7 @@
   */
@@ -687,10 +687,10 @@ __END__
 -	char info[10];
 +	char info[12];
  	char type = '?';
- 
+
  	if (S_ISREG(e->mode)) type = 'f';
 @@ -442,11 +661,11 @@
- 
+
  	if (S_ISCHR(e->mode) || (S_ISBLK(e->mode))) {
  		/* major/minor numbers can be as high as 2^12 or 4096 */
 -		snprintf(info, 10, "%4d,%4d", major(e->size), minor(e->size));
@@ -701,7 +701,7 @@ __END__
 -		snprintf(info, 10, "%9d", e->size);
 +		snprintf(info, 11, "%9d", e->size);
  	}
- 
+
  	printf("%c %04o %s %5d:%-3d %s\n",
 @@ -462,17 +681,9 @@
  {
@@ -709,7 +709,7 @@ __END__
  	int stack_size = 64;
 -	struct entry **entry_stack;
 +	struct entry **entry_stack = NULL;
- 
+
 -	entry_stack = malloc(stack_size * sizeof(struct entry *));
 -	if (!entry_stack) {
 -		die(MKFS_ERROR, 1, "malloc failed");
@@ -740,10 +740,10 @@ __END__
 +			if (swap_endian)
 +				fix_inode(inode);
  		}
- 
+
  		/*
 @@ -543,7 +753,7 @@
- 
+
  		set_data_offset(entry, base, offset);
  		if (opt_verbose) {
 -			printf("%s:\n", entry->name);
@@ -752,7 +752,7 @@ __END__
  		entry = entry->child;
  	}
 @@ -553,16 +763,21 @@
- 
+
  static int is_zero(char const *begin, unsigned len)
  {
 -	/* Returns non-zero iff the first LEN bytes from BEGIN are all NULs. */
@@ -781,7 +781,7 @@ __END__
 +		/* Never create holes. */
 +		return 0;
  }
- 
+
  /*
 @@ -575,40 +790,39 @@
   * Note that size > 0, as a zero-sized file wouldn't ever
@@ -798,10 +798,10 @@ __END__
  	unsigned long curr = offset + 4 * blocks;
  	int change;
 +	char *uncompressed = entry->uncompressed;
- 
+
 -	total_blocks += blocks;
-+	total_blocks += blocks; 
- 
++	total_blocks += blocks;
+
  	do {
  		unsigned long len = 2 * blksize;
  		unsigned int input = size;
@@ -820,19 +820,19 @@ __END__
  			curr += len;
  		}
  		uncompressed += input;
- 
+
  		if (len > blksize*2) {
  			/* (I don't think this can happen with zlib.) */
 -			die(MKFS_ERROR, 0, "AIEEE: block \"compressed\" to > 2*blocklength (%ld)", len);
 +			error_msg_and_die("AIEEE: block \"compressed\" to > 2*blocklength (%ld)\n", len);
  		}
- 
+
  		*(u32 *) (base + offset) = curr;
 +		if (swap_endian)
 +			fix_block_pointer((u32*)(base + offset));
  		offset += 4;
  	} while (size);
- 
+
 @@ -618,10 +832,12 @@
  	   st_blocks * 512.  But if you say that then perhaps
  	   administrative data should also be included in both. */
@@ -846,7 +846,7 @@ __END__
 +		    (change * 100) / (double) original_size, change, entry->name);
  	}
 +#endif
- 
+
  	return curr;
  }
 @@ -644,7 +860,7 @@
@@ -861,7 +861,7 @@ __END__
 @@ -660,13 +876,10 @@
  	int fd;
  	char *buf;
- 
+
 -	fd = open(file, O_RDONLY);
 -	if (fd < 0) {
 -		die(MKFS_ERROR, 1, "open failed: %s", file);
@@ -877,7 +877,7 @@ __END__
 @@ -679,6 +892,336 @@
  	return (offset + image_length);
  }
- 
+
 +static struct entry *find_filesystem_entry(struct entry *dir, char *name, mode_t type)
 +{
 +	struct entry *e = dir;
@@ -900,7 +900,7 @@ __END__
 +					/* Looks like we found a parent of the correct path */
 +					if (name[len] == '/') {
 +						if (e->child) {
-+							name = strchr (name, '/'); 
++							name = strchr (name, '/');
 +							return (find_filesystem_entry (e, name + len + 1, type));
 +						} else {
 +							return NULL;
@@ -918,7 +918,7 @@ __END__
 +	return (NULL);
 +}
 +
-+void modify_entry(char *full_path, unsigned long uid, unsigned long gid, 
++void modify_entry(char *full_path, unsigned long uid, unsigned long gid,
 +	unsigned long mode, unsigned long rdev, struct entry *root, loff_t *fslen_ub)
 +{
 +	char *name, *path, *full;
@@ -1011,7 +1011,7 @@ __END__
 +}
 +
 +/* the GNU C library has a wonderful scanf("%as", string) which will
-+ allocate the string with the right size, good to avoid buffer overruns. 
++ allocate the string with the right size, good to avoid buffer overruns.
 + the following macros use it if available or use a hacky workaround...
 + */
 +
@@ -1042,7 +1042,7 @@ __END__
 +    <path>	<type> <mode>	<uid>	<gid>	<major>	<minor>	<start>	<inc>	<count>
 +    /dev/mem     c    640       0       0         1       1       0     0         -
 +
-+    type can be one of: 
++    type can be one of:
 +	f	A regular file
 +	d	Directory
 +	c	Character special device file
@@ -1064,7 +1064,7 @@ __END__
 +
 +	if (sscanf (line, "%" SCANF_PREFIX "s %c %lo %lu %lu %lu %lu %lu %lu %lu",
 +		 SCANF_STRING(name), &type, &mode, &uid, &gid, &major, &minor,
-+		 &start, &increment, &count) < 0) 
++		 &start, &increment, &count) < 0)
 +	{
 +		return 1;
 +	}
@@ -1168,7 +1168,7 @@ __END__
 +	while (curr) {
 +		for (i = 0; i < depth; i++) putchar(' ');
 +		printf("%s: size=%d mode=%d same=%p\n",
-+			(curr->name)? (char*)curr->name : "/", 
++			(curr->name)? (char*)curr->name : "/",
 +			curr->size, curr->mode, curr->same);
 +		if (curr->child) traverse(curr->child, depth + 4);
 +		curr = curr->next;
@@ -1216,12 +1216,12 @@ __END__
  	int c;			/* for getopt */
  	char *ep;		/* for strtoul */
 +	FILE *devtable = NULL;
- 
+
  	total_blocks = 0;
- 
+
 @@ -699,7 +1243,7 @@
  		progname = argv[0];
- 
+
  	/* command line options */
 -	while ((c = getopt(argc, argv, "hEe:i:n:psvz")) != EOF) {
 +	while ((c = getopt(argc, argv, "hEe:i:n:prsvzD:q")) != EOF) {
@@ -1256,10 +1256,10 @@ __END__
 +			break;
  		}
  	}
- 
+
 @@ -745,25 +1302,23 @@
  	outfile = argv[optind + 1];
- 
+
  	if (stat(dirname, &st) < 0) {
 -		die(MKFS_USAGE, 1, "stat failed: %s", dirname);
 +		error_msg_and_die("stat failed: %s", dirname);
@@ -1269,7 +1269,7 @@ __END__
 -		die(MKFS_USAGE, 1, "open failed: %s", outfile);
 -	}
 +	fd = xopen(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
- 
+
 -	root_entry = calloc(1, sizeof(struct entry));
 -	if (!root_entry) {
 -		die(MKFS_ERROR, 1, "calloc failed");
@@ -1278,9 +1278,9 @@ __END__
  	root_entry->mode = st.st_mode;
  	root_entry->uid = st.st_uid;
  	root_entry->gid = st.st_gid;
- 
+
  	root_entry->size = parse_directory(root_entry, dirname, &root_entry->child, &fslen_ub);
- 
+
 +	if (devtable) {
 +		parse_device_table(devtable, root_entry, &fslen_ub);
 +	}
@@ -1289,54 +1289,54 @@ __END__
 -	   what we're going to write later on */
 +           what we're going to write later on */
  	fslen_ub = ((fslen_ub - 1) | (blksize - 1)) + 1;
- 
+
  	if (fslen_ub > MAXFSLEN) {
 @@ -790,7 +1345,7 @@
  	rom_image = mmap(NULL, fslen_ub?fslen_ub:1, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
- 
+
  	if (rom_image == MAP_FAILED) {
 -		die(MKFS_ERROR, 1, "mmap failed");
 +		error_msg_and_die("mmap failed");
  	}
- 
+
  	/* Skip the first opt_pad bytes for boot loader code */
 @@ -807,37 +1362,46 @@
  	}
- 
+
  	offset = write_directory_structure(root_entry->child, rom_image, offset);
 -	printf("Directory data: %d bytes\n", offset);
 +	if (opt_verbose)
 +	printf("Directory data: %ld bytes\n", offset);
- 
+
  	offset = write_data(root_entry, rom_image, offset);
- 
+
  	/* We always write a multiple of blksize bytes, so that
  	   losetup works. */
  	offset = ((offset - 1) | (blksize - 1)) + 1;
 -	printf("Everything: %d kilobytes\n", offset >> 10);
 +	if (opt_verbose)
 +	printf("Everything: %ld kilobytes\n", offset >> 10);
- 
+
  	/* Write the superblock now that we can fill in all of the fields. */
  	write_superblock(root_entry, rom_image+opt_pad, offset);
 -	printf("Super block: %d bytes\n", sizeof(struct cramfs_super));
 +	if (opt_verbose)
 +	printf("Super block: %ld bytes\n", sizeof(struct cramfs_super));
- 
+
  	/* Put the checksum in. */
  	crc = crc32(0L, Z_NULL, 0);
  	crc = crc32(crc, (rom_image+opt_pad), (offset-opt_pad));
  	((struct cramfs_super *) (rom_image+opt_pad))->fsid.crc = crc;
 +	if (opt_verbose)
  	printf("CRC: %x\n", crc);
- 
+
  	/* Check to make sure we allocated enough space. */
  	if (fslen_ub < offset) {
 -		die(MKFS_ERROR, 0, "not enough space allocated for ROM image (%Ld allocated, %d used)", fslen_ub, offset);
 +		error_msg_and_die("not enough space allocated for ROM "
 +			"image (%Ld allocated, %d used)", fslen_ub, offset);
  	}
- 
+
  	written = write(fd, rom_image, offset);
  	if (written < 0) {
 -		die(MKFS_ERROR, 1, "write failed");
@@ -1350,7 +1350,7 @@ __END__
 +	/* Free up memory */
 +	free_filesystem_entry(root_entry);
 +	free(root_entry);
- 
+
  	/* (These warnings used to come at the start, but they scroll off the
  	   screen too quickly.) */
 --- a/cramfs/src/getline.c
@@ -1523,7 +1523,7 @@ __END__
  #include <utime.h>
  #include <sys/ioctl.h>
  #define _LINUX_STRING_H_
-+#if ! (defined(__CYGWIN__) || defined(DARWIN)) 
++#if ! (defined(__CYGWIN__) || defined(DARWIN))
  #include <linux/fs.h>
 +#endif /* !__CYGWIN__ || DARWIN */
 +#ifdef DARWIN
@@ -1531,7 +1531,7 @@ __END__
 +#endif // DARWIN
  #include <linux/cramfs_fs.h>
  #include <zlib.h>
- 
+
 +#if defined(__CYGWIN__) || defined(DARWIN)
 +#define _IOC_NRBITS	8
 +#define _IOC_TYPEBITS	8
@@ -1557,7 +1557,7 @@ __END__
 +         ((size) << _IOC_SIZESHIFT))
 +#endif // __CYGWIN__
 +#define _IO(type,nr)	_IOC(_IOC_NONE,(type),(nr),0)
-+#endif // DARWIN 
++#endif // DARWIN
 +#define BLKGETSIZE _IO(0x12,96)
 +#endif /* __CYGWIN__ || DARWIN */
 +
@@ -1587,7 +1587,7 @@ __END__
 +
 +ADD_DEFINITIONS ("-Wall -Wno-format")
 +# GCC 4.x detects more issues than 3.x
-+# we do not want to fix alien code, so disable the warning, however the 
++# we do not want to fix alien code, so disable the warning, however the
 +# option switch we want to use is not supported in previous compiler release
 +IF ( NOT ${_gcc_COMPILER_VERSION} LESS 40 )
 +    ADD_DEFINITIONS ("-Wno-pointer-sign")

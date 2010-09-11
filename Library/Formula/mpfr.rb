@@ -15,7 +15,7 @@ class Mpfr <Formula
     system "./configure", "--prefix=#{prefix}",
                           "--with-gmp=#{Formula.factory('gmp').prefix}",
                           "--disable-debug"
-                          
+
     system "make install"
   end
 end

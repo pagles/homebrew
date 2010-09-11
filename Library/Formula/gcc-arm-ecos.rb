@@ -30,9 +30,9 @@ class GccArmEcos <Formula
     ENV['CXXFLAGS_FOR_BUILD'] = "-O2"
     ENV['CXXFLAGS'] = "-O2"
     ENV['CXXFLAGS_FOR_TARGET'] = "-O2"
-    
+
     build_dir='build'
-    FileUtils.mkdir build_dir
+    mkdir build_dir
     Dir.chdir build_dir do
       system "../configure", "--prefix=#{prefix}", "--target=arm-eabi",
                   "--disable-shared", "--with-gnu-as", "--with-gnu-ld",
@@ -49,13 +49,13 @@ class GccArmEcos <Formula
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
                   "--with-gxx-include-dir=#{prefix}/arm-eabi/include",
                   "--disable-debug",
-                  "--with-pkgversion=Neotion-SDK-Monica", 
+                  "--with-pkgversion=Neotion-SDK-Monica",
                   "--with-bugurl=http://www.neotion.com"
       system "make"
       system "make install"
     end
-    
-    FileUtils.ln_s "#{Formula.factory('binutils-arm-ecos').prefix}/arm-eabi/bin",
+
+    ln_s "#{Formula.factory('binutils-arm-ecos').prefix}/arm-eabi/bin",
                    "#{prefix}/arm-eabi/bin"
   end
 end
@@ -66,11 +66,11 @@ __END__
 @@ -40,8 +40,8 @@
  # MULTILIB_DIRNAMES   += fpu soft
  # MULTILIB_EXCEPTIONS += *mthumb/*mhard-float*
- # 
+ #
 -# MULTILIB_OPTIONS    += mno-thumb-interwork/mthumb-interwork
 -# MULTILIB_DIRNAMES   += normal interwork
 +MULTILIB_OPTIONS    += mno-thumb-interwork/mthumb-interwork
 +MULTILIB_DIRNAMES   += normal interwork
- # 
+ #
  # MULTILIB_OPTIONS    += fno-leading-underscore/fleading-underscore
  # MULTILIB_DIRNAMES   += elf under
