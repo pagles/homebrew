@@ -63,14 +63,14 @@ end
 __END__
 --- a/gcc/config/arm/t-arm-elf	2008-06-12 19:29:47.000000000 +0200
 +++ b/gcc/config/arm/t-arm-elf	2010-01-14 00:44:48.000000000 +0100
-@@ -40,8 +40,8 @@
+@@ -65,8 +65,8 @@
  # MULTILIB_DIRNAMES   += fpu soft
  # MULTILIB_EXCEPTIONS += *mthumb/*mhard-float*
- #
+ # 
 -# MULTILIB_OPTIONS    += mno-thumb-interwork/mthumb-interwork
 -# MULTILIB_DIRNAMES   += normal interwork
 +MULTILIB_OPTIONS    += mno-thumb-interwork/mthumb-interwork
 +MULTILIB_DIRNAMES   += normal interwork
- #
+ # 
  # MULTILIB_OPTIONS    += fno-leading-underscore/fleading-underscore
  # MULTILIB_DIRNAMES   += elf under
