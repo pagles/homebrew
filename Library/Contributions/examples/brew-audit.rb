@@ -66,8 +66,17 @@ def audit_formula_text text
   end
 
   # Empty checksums
-  if text =~ /md5\s+\'\'/
+  if text =~ /md5\s+(\'\'|\"\")/
     problems << " * md5 is empty"
+  end
+
+  if text =~ /sha1\s+(\'\'|\"\")/
+    problems << " * sha1 is empty"
+  end
+
+  # Commented-out depends_on
+  if text =~ /#\s*depends_on\s+(.+)\s*$/
+    problems << " * Commented-out dep #{$1}."
   end
 
   # No trailing whitespace, please
@@ -115,9 +124,14 @@ end
 def audit_formula_urls f
   problems = []
 
+  # To do:
+  # Grab URLs out of patches as well
+  # urls = ((f.patches rescue []) || [])
+
+  urls = [(f.url rescue nil), (f.head rescue nil)].reject {|p| p.nil?}
+
   # Check SourceForge urls
-  [(f.url rescue nil), (f.head rescue nil)].each do |p|
-    next if p.nil?
+  urls.each do |p|
     # Is it a filedownload (instead of svnroot)
     next if p =~ %r[/svnroot/]
     next if p =~ %r[svn\.sourceforge]
@@ -139,6 +153,15 @@ def audit_formula_urls f
 
     if p =~ %r[^http://\w+\.dl\.]
       problems << " * Update this url (don't use specific dl mirrors)."
+    end
+  end
+
+  # Check Debian urls
+  urls.each do |p|
+    next unless p =~ %r[/debian/pool/]
+
+    unless p =~ %r[^http://mirrors\.kernel\.org/debian/pool/]
+      problems << " * \"mirrors.kernel.org\" is the preferred mirror for debian software."
     end
   end
 
