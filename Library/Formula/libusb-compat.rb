@@ -6,6 +6,7 @@ class LibusbCompat <Formula
   @md5='570ac2ea085b80d1f74ddc7c6a93c0eb'
   @version='0.1.3'
 
+  depends_on 'pkg-config' => :build
   depends_on 'libusb'
   depends_on 'pkg-config'
 
