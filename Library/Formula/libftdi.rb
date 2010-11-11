@@ -18,7 +18,6 @@ class Libftdi <Formula
   def install
     mkdir 'libftdi-build'
     Dir.chdir 'libftdi-build' do
-      # ENV.append "CMAKE_INCLUDE_PATH", "#{prefix}/include/libusb-1.0"
       system "cmake .. #{std_cmake_parameters}"
       system "make"
       system "make install"
