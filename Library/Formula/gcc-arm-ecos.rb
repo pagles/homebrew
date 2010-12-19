@@ -3,20 +3,19 @@ require 'formula'
 class NewLibArmEcos <Formula
   url       'ftp://sources.redhat.com/pub/newlib/newlib-1.19.0.tar.gz'
   homepage  'http://sourceware.org/newlib/'
-  md5       '0966e19f03217db9e9076894b47e6601'
+  sha1      'b2269d30ce7b93b7c714b90ef2f40221c2df0fcd'
 end
 
 class GppArmEcos <Formula
   url       'http://ftpmirror.gnu.org/gcc/gcc-4.5.2/gcc-g++-4.5.2.tar.bz2'
   homepage  'http://gcc.gnu.org/'
-  md5       '9821f1c61e43755866861485ff364e90'
+  sha1      '7126d160b2a8bb6c9ee0fa39ec0edc25b761c121'
 end
 
 class GccArmEcos <Formula
   url       'http://ftpmirror.gnu.org/gcc/gcc-4.5.2/gcc-core-4.5.2.tar.bz2'
   homepage  'http://gcc.gnu.org/'
   sha1      '130eb3828e7b16118388febdac4e7ff03f83119e'
-  # version   '4.5.2'
 
   depends_on 'gmp'
   depends_on 'mpfr'
@@ -33,7 +32,7 @@ class GccArmEcos <Formula
   def install
     
     # Ok, I stop fighting against Ruby (wish Homebrew was written in Python...)
-    # Use the ditto system command to replicate the directory
+    # Use the ditto system command to replicate the directories
     # If anyone knows how to extract an archive into an existing directory
     # with homebrew, please - let me know!
     coredir = Dir.pwd

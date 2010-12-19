@@ -1,9 +1,9 @@
 require 'formula'
 
 class Ppl <Formula
-  @url='http://www.cs.unipr.it/ppl/Download/ftp/releases/0.11/ppl-0.11.tar.bz2'
-  @homepage='http://www.cs.unipr.it/ppl/'
-  @md5='c414abd2ecaf1f1f48949c78d383ee1a'
+  url 'http://www.cs.unipr.it/ppl/Download/ftp/releases/0.11/ppl-0.11.tar.bz2'
+  homepage 'http://www.cs.unipr.it/ppl/'
+  sha1 'bcba279c2600833876e3002635ab47cacab632d5'
 
   depends_on 'gmp'
   depends_on 'mpfr'
