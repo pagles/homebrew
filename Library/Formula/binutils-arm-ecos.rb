@@ -1,9 +1,9 @@
 require 'formula'
 
 class BinutilsArmEcos <Formula
-  @url='http://ftp.gnu.org/gnu/binutils/binutils-2.20.1.tar.bz2'
+  @url='http://ftp.gnu.org/gnu/binutils/binutils-2.21.tar.bz2'
   @homepage='http://www.gnu.org/software/binutils/'
-  @sha1='fd2ba806e6f3a55cee453cb25c86991b26a75dee'
+  @sha1='ef93235588eb443e4c4a77f229a8d131bccaecc6'
 
   depends_on 'gmp'
   depends_on 'mpfr'

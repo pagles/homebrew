@@ -1,15 +1,9 @@
 require 'formula'
 
 class Ppl <Formula
-  @url='http://www.cs.unipr.it/ppl/Download/ftp/releases/0.10.2/ppl-0.10.2.tar.bz2'
+  @url='http://www.cs.unipr.it/ppl/Download/ftp/releases/0.11/ppl-0.11.tar.bz2'
   @homepage='http://www.cs.unipr.it/ppl/'
-  @sha1='9af711df8f24658a6deb61ca3b8c5e82366258bf'
-
-  if ARGV.build_head?
-    md5 '14f4d5297a161f9ba22c33945fc61a27'
-  else
-    md5 '5667111f53150618b0fa522ffc53fc3e'
-  end
+  @md5='c414abd2ecaf1f1f48949c78d383ee1a'
 
   depends_on 'gmp'
   depends_on 'mpfr'
