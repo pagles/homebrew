@@ -8,6 +8,11 @@ class Ppl <Formula
   depends_on 'gmp'
   depends_on 'mpfr'
 
+  # Note: if ppl fails to build with a "was defined here" error, you may want
+  # to move a previous installation of PPL out of the way during the build
+  #   move Cellar/ppl/0.10.2 ~/ppl
+  #   brew install ppl
+  #   move ~/ppl Cellar/ppl/0.10.2
   def install
     ENV.append "CFLAGS", "-D__GMP_BITS_PER_MP_LIMB=GMP_NUMB_BITS"
     ENV.append "CXXFLAGS", "-D__GMP_BITS_PER_MP_LIMB=GMP_NUMB_BITS"
