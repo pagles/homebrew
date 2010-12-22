@@ -1,9 +1,9 @@
 require 'formula'
 
 class GdbArmEcos <Formula
-  @url='http://ftp.gnu.org/gnu/gdb/gdb-7.1.tar.bz2'
-  @homepage='http://www.gnu.org/software/gdb/'
-  @sha1='417e2e637a296ea0e1cdddf56233311b8708fa19'
+  url 'http://ftp.gnu.org/gnu/gdb/gdb-7.2.tar.bz2'
+  homepage 'http://www.gnu.org/software/gdb/'
+  md5 '64260e6c56979ee750a01055f16091a5'
 
   depends_on 'gmp'
   depends_on 'mpfr'
@@ -11,6 +11,8 @@ class GdbArmEcos <Formula
   depends_on 'cloog-ppl'
 
   def install
+    # Cannot build with LLVM (cross compiler crashes)
+    ENV.gcc_4_2
     system "./configure", "--prefix=#{prefix}", "--target=arm-eabi",
                 "--with-gmp=#{Formula.factory('gmp').prefix}",
                 "--with-mpfr=#{Formula.factory('mpfr').prefix}",
