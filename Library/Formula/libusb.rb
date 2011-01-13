@@ -5,7 +5,12 @@ class Libusb <Formula
   @homepage='http://libusb.sourceforge.net'
   @sha1='5484397860f709c9b51611d224819f8ed5994063'
 
+  def options
+    [["--universal", "Build a universal binary."]]
+  end
+
   def install
+    ENV.universal_binary if ARGV.include? "--universal"
     system "./configure", "--prefix=#{prefix}", "--disable-dependency-tracking"
     system "make install"
   end
