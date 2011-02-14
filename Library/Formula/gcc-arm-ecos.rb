@@ -4,29 +4,18 @@ class NewLibArmEcos <Formula
   url       'ftp://sources.redhat.com/pub/newlib/newlib-1.19.0.tar.gz'
   homepage  'http://sourceware.org/newlib/'
   sha1      'b2269d30ce7b93b7c714b90ef2f40221c2df0fcd'
-
-  def patches
-    { :p1 => "http://www.moaningmarmot.info/newlib.patch" }
-  end
-
 end
 
 class GppArmEcos <Formula
-  url       'ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/snapshots/4.6-20110205/gcc-g++-4.6-20110205.tar.bz2'
+  url       'http://ftpmirror.gnu.org/gcc/gcc-4.5.2/gcc-g++-4.5.2.tar.bz2'
   homepage  'http://gcc.gnu.org/'
-  sha1      '3af28e211d12b25c845f1d721e5c7004eed50bc7'
-end
-
-class GobjcArmEcos <Formula
-  url       'ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/snapshots/4.6-20110205/gcc-objc-4.6-20110205.tar.bz2'
-  homepage  'http://gcc.gnu.org/'
-  sha1      '7037424d5fd5fa98d9438431c906f7a98f42e182'
+  sha1      '7126d160b2a8bb6c9ee0fa39ec0edc25b761c121'
 end
 
 class GccArmEcos <Formula
-  url       'ftp://ftp.irisa.fr/pub/mirrors/gcc.gnu.org/gcc/snapshots/4.6-20110205/gcc-core-4.6-20110205.tar.bz2'
+  url       'http://ftpmirror.gnu.org/gcc/gcc-4.5.2/gcc-core-4.5.2.tar.bz2'
   homepage  'http://gcc.gnu.org/'
-  sha1      'b66e799bc00338e4ab7dd4d1a59abc44a5f12b15'
+  sha1      '130eb3828e7b16118388febdac4e7ff03f83119e'
 
   depends_on 'gmp'
   depends_on 'mpfr'
@@ -48,7 +37,6 @@ class GccArmEcos <Formula
     # with homebrew, please - let me know!
     coredir = Dir.pwd
     GppArmEcos.new.brew { system "ditto", Dir.pwd, coredir }
-    GobjcArmEcos.new.brew { system "ditto", Dir.pwd, coredir }
     NewLibArmEcos.new.brew { 
         system "ditto", Dir.pwd+'/libgloss', coredir+'/libgloss'
         system "ditto", Dir.pwd+'/newlib', coredir+'/newlib' 
@@ -67,15 +55,13 @@ class GccArmEcos <Formula
     build_dir='build'
     mkdir build_dir
     Dir.chdir build_dir do
-      #system "exit 1"
       system "../configure", "--prefix=#{prefix}", "--target=arm-eabi",
-                  "--disable-shared", "--with-gnu-as", "--with-gnu-ld",
+                  "--enable-shared", "--with-gnu-as", "--with-gnu-ld",
                   "--with-newlib", "--enable-softfloat", "--disable-bigendian",
                   "--disable-fpu", "--disable-underscore", "--enable-multilibs",
-                  "--with-float=soft", "--enable-interwork", "--disable-lto",
-                  "--disable-plugin", "--with-multilib-list=interwork", 
-                  "--with-abi=aapcs", "--enable-languages=c,c++,objc",
-                  "--enable-threads=posix",
+                  "--with-float=soft", "--enable-interwork", "--enable-lto",
+                  "--enable-plugin", "--with-multilib-list=interwork", 
+                  "--with-abi=aapcs", "--enable-languages=c,c++",
                   "--with-gmp=#{Formula.factory('gmp').prefix}",
                   "--with-mpfr=#{Formula.factory('mpfr').prefix}",
                   "--with-mpc=#{Formula.factory('libmpc').prefix}",
@@ -84,7 +70,7 @@ class GccArmEcos <Formula
                   "--with-libelf=#{Formula.factory('libelf').prefix}",
                   "--with-gxx-include-dir=#{prefix}/arm-eabi/include",
                   "--disable-debug", "--disable-__cxa_atexit",
-                  "--with-pkgversion=Neotion-SDK-Regina",
+                  "--with-pkgversion=Neotion-SDK-Qiana",
                   "--with-bugurl=http://www.neotion.com"
       system "make"
       system "make install"
@@ -109,3 +95,46 @@ __END__
  # 
  # MULTILIB_OPTIONS    += fno-leading-underscore/fleading-underscore
  # MULTILIB_DIRNAMES   += elf under
+--- a/gcc/config/386/i386.c	2010-07-23 18:20:40.000000000 +0200
++++ b/gcc/config/i386/i386.c	2010-07-23 18:22:33.436581657 +0200
+@@ -4991,7 +4991,8 @@
+    case, we return the original mode and warn ABI change if CUM isn't
+    NULL.  */
+ 
+-static enum machine_mode
++enum machine_mode type_natural_mode (const_tree, CUMULATIVE_ARGS *);
++enum machine_mode
+ type_natural_mode (const_tree type, CUMULATIVE_ARGS *cum)
+ {
+   enum machine_mode mode = TYPE_MODE (type);
+@@ -5122,7 +5123,9 @@
+    See the x86-64 PS ABI for details.
+ */
+ 
+-static int
++int classify_argument (enum machine_mode, const_tree,
++                       enum x86_64_reg_class [MAX_CLASSES], int);
++int
+ classify_argument (enum machine_mode mode, const_tree type,
+ 		   enum x86_64_reg_class classes[MAX_CLASSES], int bit_offset)
+ {
+@@ -5503,7 +5506,8 @@
+ 
+ /* Examine the argument and return set number of register required in each
+    class.  Return 0 iff parameter should be passed in memory.  */
+-static int
++int examine_argument (enum machine_mode, const_tree, int, int *, int *);
++int
+ examine_argument (enum machine_mode mode, const_tree type, int in_return,
+ 		  int *int_nregs, int *sse_nregs)
+ {
+@@ -6184,7 +6188,8 @@
+ 
+ /* Return true when TYPE should be 128bit aligned for 32bit argument passing
+    ABI.  */
+-static bool
++bool contains_aligned_value_p (const_tree);
++bool
+ contains_aligned_value_p (const_tree type)
+ {
+   enum machine_mode mode = TYPE_MODE (type);
