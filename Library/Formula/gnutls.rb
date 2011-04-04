@@ -13,8 +13,7 @@ class Gnutls < Formula
     DATA
   end
 
-  def install
-    fails_with_llvm "Undefined symbols when linking", :build => "2326"
+  fails_with_llvm "Undefined symbols when linking", :build => "2326"
 
     system "./configure", "--disable-debug", "--disable-dependency-tracking",
                           "--prefix=#{prefix}",
