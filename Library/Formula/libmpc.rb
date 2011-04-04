@@ -1,9 +1,9 @@
 require 'formula'
 
 class Libmpc < Formula
-  url 'http://multiprecision.org/mpc/download/mpc-0.8.2.tar.gz'
+  url 'http://multiprecision.org/mpc/download/mpc-0.9.tar.gz'
   homepage 'http://multiprecision.org'
-  md5 'e98267ebd5648a39f881d66797122fb6'
+  sha1 '229722d553030734d49731844abfef7617b64f1a'
 
   depends_on 'gmp'
   depends_on 'mpfr'
