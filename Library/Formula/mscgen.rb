@@ -6,7 +6,7 @@ class Mscgen < Formula
   md5 '9ee92974529cbba5a058325b6607c263'
 
   depends_on 'pkg-config' => :build
-  depends_on 'gd' => :recommended
+  depends_on 'gd'
 
   def install
     system "./configure", "--disable-dependency-tracking",

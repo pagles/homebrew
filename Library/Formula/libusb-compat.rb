@@ -7,6 +7,7 @@ class LibusbCompat < Formula
 
   depends_on 'pkg-config' => :build
   depends_on 'libusb'
+  depends_on 'pkg-config'
 
   def install
     system "./configure", "--prefix=#{prefix}", "--disable-dependency-tracking"
